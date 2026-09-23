@@ -195,9 +195,14 @@ function draw() {
     context.fillStyle = 'rgba(36, 51, 59, .14)';
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.textAlign = 'center';
-    context.fillStyle = '#3d67c0d1';
     context.font = '700 28px Georgia';
-    context.fillText(game.state === 'ready' ? '準備好了嗎？' : '再跑一次！', canvas.width / 2, 145);
+    const title = game.state === 'ready' ? '準備好了嗎？' : '再跑一次！';
+    context.strokeStyle = '#000000';
+    context.lineWidth = 5;
+    context.lineJoin = 'round';
+    context.strokeText(title, canvas.width / 2, 145);
+    context.fillStyle = '#FFFFFF';
+    context.fillText(title, canvas.width / 2, 145);
     context.font = '16px Trebuchet MS';
     context.fillText('按空白鍵或點擊畫面開始', canvas.width / 2, 178);
   }
