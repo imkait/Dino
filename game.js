@@ -204,6 +204,10 @@ function draw() {
     context.fillStyle = '#FFFFFF';
     context.fillText(title, canvas.width / 2, 145);
     context.font = '16px Trebuchet MS';
+    context.strokeStyle = '#000000';
+    context.lineWidth = 3;
+    context.strokeText('按空白鍵或點擊畫面開始', canvas.width / 2, 178);
+    context.fillStyle = '#FFFFFF';
     context.fillText('按空白鍵或點擊畫面開始', canvas.width / 2, 178);
   }
 }
