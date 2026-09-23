@@ -138,6 +138,28 @@ canvas {
   font-size: .8rem;
 }
 
+.key-button {
+  padding: 3px 7px;
+  border: 1px solid #aeb8b5;
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.key-button:active {
+  transform: translateY(1px);
+  border-bottom-width: 1px;
+}
+
+.key-button:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 2px;
+}
+
 kbd {
   padding: 3px 7px;
   border: 1px solid #aeb8b5;

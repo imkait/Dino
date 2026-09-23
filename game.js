@@ -3,6 +3,7 @@ const context = canvas.getContext('2d');
 const scoreText = document.querySelector('#scoreText');
 const bestText = document.querySelector('#bestText');
 const statusText = document.querySelector('#statusText');
+const jumpButtons = document.querySelectorAll('[data-jump]');
 
 const groundY = 292;
 const dino = { x: 108, y: groundY - 128, width: 90, height: 128, velocityY: 0, grounded: true };
@@ -227,4 +228,5 @@ window.addEventListener('keydown', event => {
   }
 });
 canvas.addEventListener('pointerdown', jump);
+jumpButtons.forEach(button => button.addEventListener('click', jump));
 requestAnimationFrame(frame);
