@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NTHS 跑酷遊戲</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #24333b;
+      --muted: #66747b;
+      --paper: #fffaf0;
+      --sky: #b9e7e5;
+      --sky-deep: #72c5c4;
+      --coral: #ee785e;
+      --coral-dark: #b74f42;
+      --yellow: #f8c66d;
+      --line: #24333b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(248, 198, 109, .55), transparent 28%),
+        linear-gradient(145deg, #eff8e8 0%, #f9e8c6 52%, #f4c9ae 100%);
+      font-family: Georgia, "PingFang TC", "Microsoft JhengHei", serif;
+    }
+
+    .shell {
+      width: min(100%, 1080px);
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--coral-dark);
+      font: 700 .75rem/1.2 "Trebuchet MS", sans-serif;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.2rem, 6vw, 4.9rem);
+      line-height: .92;
+      letter-spacing: .02em;
+    }
+
+    .intro {
+      max-width: 340px;
+      margin: 0;
+      color: var(--muted);
+      font-size: .98rem;
+      line-height: 1.55;
+      text-align: right;
+    }
+
+    .game-frame {
+      overflow: hidden;
+      border: 3px solid var(--line);
+      border-radius: 18px;
+      background: var(--paper);
+      box-shadow: 10px 12px 0 rgba(36, 51, 59, .16);
+    }
+
+    .hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      border-bottom: 2px solid var(--line);
+      background: rgba(255, 250, 240, .9);
+      font-family: "Trebuchet MS", "PingFang TC", sans-serif;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: .84rem;
+      font-weight: 700;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--coral);
+      box-shadow: 0 0 0 4px rgba(238, 120, 94, .18);
+    }
+
+    .scores {
+      display: flex;
+      gap: 18px;
+      color: var(--muted);
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .score-value {
+      margin-left: 5px;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      background: var(--sky);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 6;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .hint {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 13px 18px 15px;
+      color: var(--muted);
+      background: var(--paper);
+      font-family: "Trebuchet MS", "PingFang TC", sans-serif;
+      font-size: .8rem;
+    }
+
+    kbd {
+      padding: 3px 7px;
+      border: 1px solid #aeb8b5;
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 700;
+    }
+
+    @media (max-width: 650px) {
+      body { padding: 14px; }
+      header { display: block; }
+      .intro { margin-top: 12px; text-align: left; }
+      .scores { gap: 10px; font-size: .7rem; }
+      .hint { display: block; line-height: 1.7; }
+      .hint span + span { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">Endless runner / prototype 01</p>
+        <h1>NTHS 跑酷遊戲</h1>
+      </div>
+      <p class="intro">跳過障礙，保持節奏。每一次落地，都是下一次起跳的準備。</p>
+    </header>
+
+    <section class="game-frame" aria-label="Dino 跑酷遊戲">
+      <div class="hud">
+        <div class="status"><span class="status-dot" aria-hidden="true"></span><span id="statusText">準備出發</span></div>
+        <div class="scores">
+          <span>分數 <strong class="score-value" id="scoreText">00000</strong></span>
+          <span>最高 <strong class="score-value" id="bestText">00000</strong></span>
+        </div>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="game" width="960" height="360" aria-label="遊戲畫面，點擊或按空白鍵跳躍"></canvas>
+      </div>
+      <div class="hint">
+        <span><kbd>Space</kbd> <kbd>↑</kbd> 跳躍</span>
+        <span>點擊畫面也可以開始或跳躍</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.querySelector('#game');
+    const context = canvas.getContext('2d');
+    const scoreText = document.querySelector('#scoreText');
+    const bestText = document.querySelector('#bestText');
+    const statusText = document.querySelector('#statusText');
+
+    const groundY = 292;
+    const dino = { x: 108, y: groundY - 128, width: 90, height: 128, velocityY: 0, grounded: true };
+    const dinoImages = {
+      run: [
+        loadImage('assets/dino-run-1.png'),
+        loadImage('assets/dino-run-2.png'),
+        loadImage('assets/dino-run-3.png')
+      ],
+      jump: loadImage('assets/dino-jump.png'),
+      hit: loadImage('assets/dino-hit.png')
+    };
+    const campusImage = loadImage('assets/nths.png');
+    let campusOpaqueBounds;
+    const game = { state: 'ready', score: 0, best: Math.floor(Number(localStorage.getItem('dino-best') || 0)), speed: 6, spawnTimer: 0, lastTime: 0, groundOffset: 0 };
+    const obstacles = [];
+    const clouds = [
+      { x: 90, y: 70, width: 76, speed: .18 },
+      { x: 430, y: 112, width: 54, speed: .12 },
+      { x: 760, y: 58, width: 92, speed: .2 }
+    ];
+
+    bestText.textContent = String(game.best).padStart(5, '0');
+
+    function loadImage(source) {
+      const image = new Image();
+      image.src = source;
+      return image;
+    }
+
+    function detectOpaqueBounds(image) {
+      const probe = document.createElement('canvas');
+      probe.width = image.naturalWidth;
+      probe.height = image.naturalHeight;
+      const probeContext = probe.getContext('2d');
+      probeContext.drawImage(image, 0, 0);
+      const pixels = probeContext.getImageData(0, 0, probe.width, probe.height).data;
+      let top = probe.height;
+      let bottom = -1;
+
+      for (let y = 0; y < probe.height; y += 1) {
+        for (let x = 0; x < probe.width; x += 1) {
+          if (pixels[(y * probe.width + x) * 4 + 3] > 10) {
+            top = Math.min(top, y);
+            bottom = Math.max(bottom, y);
+          }
+        }
+      }
+
+      return bottom >= 0 ? { top, bottom } : { top: 0, bottom: probe.height - 1 };
+    }
+
+    function setStatus(text) {
+      statusText.textContent = text;
+    }
+
+    function resetGame() {
+      obstacles.length = 0;
+      dino.y = groundY - dino.height;
+      dino.velocityY = 0;
+      dino.grounded = true;
+      game.score = 0;
+      game.speed = 6;
+      game.spawnTimer = 70;
+      game.state = 'playing';
+      setStatus('奔跑中');
+    }
+
+    function jump() {
+      if (game.state !== 'playing') {
+        resetGame();
+        return;
+      }
+      if (dino.grounded) {
+        dino.velocityY = -14.5;
+        dino.grounded = false;
+      }
+    }
+
+    function addObstacle() {
+      const height = 34 + Math.random() * 30;
+      const width = 20 + Math.random() * 13;
+      obstacles.push({ x: canvas.width + 20, y: groundY - height, width, height });
+      game.spawnTimer = 64 + Math.random() * 65 - Math.min(game.score / 12, 28);
+    }
+
+    function overlaps(first, second) {
+      const inset = 7;
+      return first.x + inset < second.x + second.width &&
+        first.x + first.width - inset > second.x &&
+        first.y + inset < second.y + second.height &&
+        first.y + first.height - 4 > second.y;
+    }
+
+    function endGame() {
+      game.state = 'over';
+      game.best = Math.floor(Math.max(game.best, game.score));
+      localStorage.setItem('dino-best', game.best);
+      bestText.textContent = String(game.best).padStart(5, '0');
+      setStatus('撞到了！再試一次');
+    }
+
+    function update(delta) {
+      if (game.state !== 'playing') return;
+      const step = delta / 16.67;
+      game.score += delta * .006;
+      game.speed = Math.min(12, 6 + game.score / 180);
+      game.groundOffset = (game.groundOffset + game.speed * step) % 34;
+      game.spawnTimer -= step;
+      if (game.spawnTimer <= 0) addObstacle();
+
+      dino.velocityY += .72 * step;
+      dino.y += dino.velocityY * step;
+      if (dino.y >= groundY - dino.height) {
+        dino.y = groundY - dino.height;
+        dino.velocityY = 0;
+        dino.grounded = true;
+      }
+
+      obstacles.forEach(obstacle => { obstacle.x -= game.speed * step; });
+      while (obstacles[0] && obstacles[0].x + obstacles[0].width < -20) obstacles.shift();
+      if (obstacles.some(obstacle => overlaps(dino, obstacle))) endGame();
+
+      scoreText.textContent = String(Math.floor(game.score)).padStart(5, '0');
+    }
+
+    function drawCloud(cloud) {
+      context.fillStyle = 'rgba(255, 250, 240, .72)';
+      context.beginPath();
+      context.arc(cloud.x, cloud.y, cloud.width * .18, 0, Math.PI * 2);
+      context.arc(cloud.x + cloud.width * .28, cloud.y - 10, cloud.width * .24, 0, Math.PI * 2);
+      context.arc(cloud.x + cloud.width * .55, cloud.y, cloud.width * .2, 0, Math.PI * 2);
+      context.fill();
+      context.fillRect(cloud.x - 2, cloud.y, cloud.width * .58, 15);
+    }
+
+    function drawDino() {
+      const image = game.state === 'over'
+        ? dinoImages.hit
+        : dino.grounded
+          ? dinoImages.run[Math.floor(game.score * .90) % dinoImages.run.length]
+          : dinoImages.jump;
+      if (image.complete && image.naturalWidth > 0) {
+        context.drawImage(image, dino.x, dino.y, dino.width, dino.height);
+      }
+    }
+
+    function drawObstacle(obstacle) {
+      context.fillStyle = '#4f9d69';
+      context.fillRect(obstacle.x + obstacle.width * .28, obstacle.y, obstacle.width * .44, obstacle.height);
+      context.fillRect(obstacle.x, obstacle.y + obstacle.height * .42, obstacle.width, 8);
+      context.fillRect(obstacle.x + obstacle.width * .72, obstacle.y + obstacle.height * .18, 7, 20);
+      context.fillStyle = '#28704f';
+      context.fillRect(obstacle.x + obstacle.width * .28, obstacle.y + 8, 5, obstacle.height - 8);
+    }
+
+    function draw() {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      const skyGradient = context.createLinearGradient(0, 0, 0, canvas.height);
+      skyGradient.addColorStop(0, '#b9e7e5');
+      skyGradient.addColorStop(1, '#f7d9aa');
+      context.fillStyle = skyGradient;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (campusImage.complete && campusImage.naturalWidth > 0) {
+        const campusHeight = canvas.width * campusImage.naturalHeight / campusImage.naturalWidth;
+        campusOpaqueBounds ||= detectOpaqueBounds(campusImage);
+        const campusOpaqueBottom = campusOpaqueBounds.bottom / campusImage.naturalHeight;
+        context.globalAlpha = .92;
+        context.drawImage(campusImage, 0, groundY - campusHeight * campusOpaqueBottom, canvas.width, campusHeight);
+        context.globalAlpha = 1;
+      }
+
+      context.fillStyle = 'rgba(248, 198, 109, .82)';
+      context.beginPath();
+      context.arc(790, 85, 42, 0, Math.PI * 2);
+      context.fill();
+      clouds.forEach(drawCloud);
+
+      context.fillStyle = '#d99b6a';
+      context.fillRect(0, groundY, canvas.width, 4);
+      context.fillStyle = '#b97859';
+      for (let x = -game.groundOffset; x < canvas.width; x += 34) context.fillRect(x, groundY + 16, 17, 3);
+      for (let x = 10 - game.groundOffset * .6; x < canvas.width; x += 72) context.fillRect(x, groundY + 35, 8, 3);
+
+      obstacles.forEach(drawObstacle);
+      drawDino();
+
+      if (game.state !== 'playing') {
+        context.fillStyle = 'rgba(36, 51, 59, .14)';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.textAlign = 'center';
+        context.fillStyle = '#FFFFFF';
+        context.font = '700 28px Georgia';
+        context.fillText(game.state === 'ready' ? '準備好了嗎？' : '再跑一次！', canvas.width / 2, 145);
+        context.font = '16px Trebuchet MS';
+        context.fillText('按空白鍵或點擊畫面開始', canvas.width / 2, 178);
+      }
+    }
+
+    function frame(time) {
+      const delta = Math.min(time - game.lastTime || 16.67, 34);
+      game.lastTime = time;
+      update(delta);
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('keydown', event => {
+      if (event.code === 'Space' || event.code === 'ArrowUp') {
+        event.preventDefault();
+        jump();
+      }
+    });
+    canvas.addEventListener('pointerdown', jump);
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
