@@ -32,6 +32,8 @@ Dino/
 ├── handoff.md
 ├── GAME_PLAN.md
 ├── index.html
+├── styles.css
+├── game.js
 ├── assets/
 │   ├── dino-run-1.png
 │   ├── dino-run-2.png
