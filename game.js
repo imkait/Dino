@@ -130,7 +130,7 @@ function update(delta) {
 }
 
 function drawCloud(cloud) {
-  context.fillStyle = 'rgba(16, 90, 155, 0.72)';
+  context.fillStyle = 'rgb(239, 244, 248)';
   context.beginPath();
   context.arc(cloud.x, cloud.y, cloud.width * .18, 0, Math.PI * 2);
   context.arc(cloud.x + cloud.width * .28, cloud.y - 10, cloud.width * .24, 0, Math.PI * 2);
@@ -195,7 +195,7 @@ function draw() {
     context.fillStyle = 'rgba(36, 51, 59, .14)';
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.textAlign = 'center';
-    context.fillStyle = '#FFFFFF';
+    context.fillStyle = '#3d67c0d1';
     context.font = '700 28px Georgia';
     context.fillText(game.state === 'ready' ? '準備好了嗎？' : '再跑一次！', canvas.width / 2, 145);
     context.font = '16px Trebuchet MS';
