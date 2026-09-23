@@ -171,7 +171,7 @@ function draw() {
     const campusHeight = canvas.width * campusImage.naturalHeight / campusImage.naturalWidth;
     campusOpaqueBounds ||= detectOpaqueBounds(campusImage);
     const campusOpaqueBottom = campusOpaqueBounds.bottom / campusImage.naturalHeight;
-    context.globalAlpha = .92;
+    context.globalAlpha = .58;
     context.drawImage(campusImage, 0, groundY - campusHeight * campusOpaqueBottom, canvas.width, campusHeight);
     context.globalAlpha = 1;
   }
