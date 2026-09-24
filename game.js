@@ -18,8 +18,20 @@ const dinoImages = {
 };
 const campusImage = loadImage('assets/nths.png');
 let campusOpaqueBounds;
-const game = { state: 'ready', score: 0, best: Math.floor(Number(localStorage.getItem('dino-best') || 0)), speed: 6, spawnTimer: 0, lastTime: 0, groundOffset: 0 };
+const game = {
+  state: 'ready',
+  score: 0,
+  best: Math.floor(Number(localStorage.getItem('dino-best') || 0)),
+  speed: 6,
+  spawnTimer: 0,
+  powerupTimer: 0,
+  lastTime: 0,
+  groundOffset: 0,
+  elapsed: 0
+};
 const obstacles = [];
+const powerups = [];
+const effects = { shieldUntil: 0, doubleUntil: 0 };
 const clouds = [
   { x: 90, y: 70, width: 76, speed: .18 },
   { x: 430, y: 112, width: 54, speed: .12 },
@@ -60,14 +72,32 @@ function setStatus(text) {
   statusText.textContent = text;
 }
 
+function getCurrentStatusText() {
+  if (effects.shieldUntil > game.elapsed && effects.doubleUntil > game.elapsed) return '護盾 ×2';
+  if (effects.shieldUntil > game.elapsed) return '護盾啟動';
+  if (effects.doubleUntil > game.elapsed) return '2x 分數';
+  return '奔跑中';
+}
+
+function updateStatusText() {
+  if (game.state === 'playing') {
+    setStatus(getCurrentStatusText());
+  }
+}
+
 function resetGame() {
   obstacles.length = 0;
+  powerups.length = 0;
   dino.y = groundY - dino.height;
   dino.velocityY = 0;
   dino.grounded = true;
   game.score = 0;
   game.speed = 6;
   game.spawnTimer = 70;
+  game.powerupTimer = 180;
+  game.elapsed = 0;
+  effects.shieldUntil = 0;
+  effects.doubleUntil = 0;
   game.state = 'playing';
   setStatus('奔跑中');
 }
@@ -90,12 +120,40 @@ function addObstacle() {
   game.spawnTimer = 64 + Math.random() * 65 - Math.min(game.score / 12, 28);
 }
 
+function addPowerup() {
+  const type = Math.random() < .5 ? 'shield' : 'double';
+  const width = 26;
+  const height = 26;
+  powerups.push({
+    x: canvas.width + 20,
+    y: groundY - 58 - Math.random() * 26,
+    baseY: groundY - 58 - Math.random() * 26,
+    width,
+    height,
+    type,
+    bobOffset: Math.random() * Math.PI * 2
+  });
+  game.powerupTimer = 200 + Math.random() * 140;
+}
+
 function overlaps(first, second) {
   const inset = 7;
   return first.x + inset < second.x + second.width &&
     first.x + first.width - inset > second.x &&
     first.y + inset < second.y + second.height &&
     first.y + first.height - 4 > second.y;
+}
+
+function applyPowerup(type) {
+  const now = game.elapsed;
+  if (type === 'shield') {
+    effects.shieldUntil = now + 4500;
+    setStatus('護盾啟動');
+  }
+  if (type === 'double') {
+    effects.doubleUntil = now + 5000;
+    setStatus('2x 分數');
+  }
 }
 
 function endGame() {
@@ -109,11 +167,16 @@ function endGame() {
 function update(delta) {
   if (game.state !== 'playing') return;
   const step = delta / 16.67;
-  game.score += delta * .006;
+  game.elapsed += delta;
+  const scoreMultiplier = effects.doubleUntil > game.elapsed ? 2 : 1;
+  game.score += delta * .006 * scoreMultiplier;
   game.speed = Math.min(12, 6 + game.score / 180);
   game.groundOffset = (game.groundOffset + game.speed * step) % 34;
   game.spawnTimer -= step;
+  game.powerupTimer -= step;
+
   if (game.spawnTimer <= 0) addObstacle();
+  if (game.powerupTimer <= 0) addPowerup();
 
   dino.velocityY += .72 * step;
   dino.y += dino.velocityY * step;
@@ -125,8 +188,35 @@ function update(delta) {
 
   obstacles.forEach(obstacle => { obstacle.x -= game.speed * step; });
   while (obstacles[0] && obstacles[0].x + obstacles[0].width < -20) obstacles.shift();
-  if (obstacles.some(obstacle => overlaps(dino, obstacle))) endGame();
 
+  powerups.forEach(powerup => {
+    powerup.x -= game.speed * step;
+    powerup.y = powerup.baseY + Math.sin((game.elapsed + powerup.bobOffset) / 200) * 10;
+  });
+  while (powerups[0] && powerups[0].x + powerups[0].width < -20) powerups.shift();
+
+  for (let i = obstacles.length - 1; i >= 0; i -= 1) {
+    const obstacle = obstacles[i];
+    if (overlaps(dino, obstacle)) {
+      if (effects.shieldUntil > game.elapsed) {
+        obstacles.splice(i, 1);
+        setStatus('護盾抵擋');
+      } else {
+        endGame();
+        break;
+      }
+    }
+  }
+
+  for (let i = powerups.length - 1; i >= 0; i -= 1) {
+    const powerup = powerups[i];
+    if (overlaps(dino, powerup)) {
+      applyPowerup(powerup.type);
+      powerups.splice(i, 1);
+    }
+  }
+
+  updateStatusText();
   scoreText.textContent = String(Math.floor(game.score)).padStart(5, '0');
 }
 
@@ -146,6 +236,15 @@ function drawDino() {
     : dino.grounded
       ? dinoImages.run[Math.floor(game.score * .90) % dinoImages.run.length]
       : dinoImages.jump;
+
+  if (effects.shieldUntil > game.elapsed) {
+    context.strokeStyle = 'rgba(94, 182, 255, .9)';
+    context.lineWidth = 4;
+    context.beginPath();
+    context.arc(dino.x + dino.width / 2, dino.y + dino.height / 2, dino.width / 2 + 10, 0, Math.PI * 2);
+    context.stroke();
+  }
+
   if (image.complete && image.naturalWidth > 0) {
     context.drawImage(image, dino.x, dino.y, dino.width, dino.height);
   }
@@ -158,6 +257,31 @@ function drawObstacle(obstacle) {
   context.fillRect(obstacle.x + obstacle.width * .72, obstacle.y + obstacle.height * .18, 7, 20);
   context.fillStyle = '#28704f';
   context.fillRect(obstacle.x + obstacle.width * .28, obstacle.y + 8, 5, obstacle.height - 8);
+}
+
+function drawPowerup(powerup) {
+  const centerX = powerup.x + powerup.width / 2;
+  const centerY = powerup.y + powerup.height / 2;
+  context.fillStyle = powerup.type === 'shield' ? '#63c8ff' : '#f7c55d';
+  context.beginPath();
+  context.arc(centerX, centerY, powerup.width * .48, 0, Math.PI * 2);
+  context.fill();
+
+  context.strokeStyle = 'rgba(255, 255, 255, .88)';
+  context.lineWidth = 3;
+  context.beginPath();
+  context.moveTo(centerX, centerY - 8);
+  context.lineTo(centerX, centerY + 8);
+  context.moveTo(centerX - 8, centerY);
+  context.lineTo(centerX + 8, centerY);
+  context.stroke();
+
+  if (powerup.type === 'double') {
+    context.fillStyle = '#fff5d6';
+    context.font = '700 12px Trebuchet MS';
+    context.textAlign = 'center';
+    context.fillText('2x', centerX, centerY + 4);
+  }
 }
 
 function draw() {
@@ -189,6 +313,7 @@ function draw() {
   for (let x = -game.groundOffset; x < canvas.width; x += 34) context.fillRect(x, groundY + 16, 17, 3);
   for (let x = 10 - game.groundOffset * .6; x < canvas.width; x += 72) context.fillRect(x, groundY + 35, 8, 3);
 
+  powerups.forEach(drawPowerup);
   obstacles.forEach(drawObstacle);
   drawDino();
 
